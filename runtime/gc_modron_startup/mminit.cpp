@@ -2872,8 +2872,8 @@ configurateGCWithPolicyAndOptionsStandard(MM_EnvironmentBase *env)
 MM_Configuration *
 configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 {
-	J9JavaVM *vm = (J9JavaVM*) omrVM->_language_vm;
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	//J9JavaVM *vm = (J9JavaVM*) omrVM->_language_vm;
+	//PORT_ACCESS_FROM_JAVAVM(vm);
 	MM_Configuration *result = NULL;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(omrVM);
 	MM_EnvironmentBase env(omrVM);
@@ -2899,7 +2899,8 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 	case gc_policy_gencon:
 		extensions->gcModeString = "-Xgcpolicy:gencon";
 		omrVM->gcPolicy = J9_GC_POLICY_GENCON;
-		ccMark = (1 != j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET));
+		//ccMark = (1 != j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET));
+		ccMark = false;
 		/* scavenge, concurrentMark, noConcurrentSweep, loa */
 		setDefaultConfigOptions(extensions, true, ccMark, false, true);
 		result = configurateGCWithPolicyAndOptionsStandard(&env);
