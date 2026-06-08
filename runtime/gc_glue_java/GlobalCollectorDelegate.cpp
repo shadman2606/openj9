@@ -204,6 +204,7 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 		exitClassUnloadMutex(env);
 	}
 
+	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 	/* make sure that we are going to get at least some number of bytes back since this will otherwise waste time in monitor operations and potentially get exclusive in order to do nothing */
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 	uintptr_t reclaimableMemory = _extensions->classLoaderManager->reclaimableMemory();
@@ -232,6 +233,7 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 			}
 		} else {
 #if defined(J9VM_GC_MODRON_COMPACTION)
+			omrtty_printf("SHADMAN mainThreadGarbageCollectFinished no fixHeapForWalk\n");
 			Trc_MM_FlushUndeadSegments_Entry(vmThread, "Compaction");
 			_extensions->classLoaderManager->flushUndeadSegments(env);
 			Trc_MM_FlushUndeadSegments_Exit(vmThread);
