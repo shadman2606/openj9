@@ -171,7 +171,6 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 }
 
-// TODO: instead of bool compactThisCycle, pass in an enum compactReason. Treat compactReason=NONE same as compactedThisCycle=false
 void
 MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle)
 {
