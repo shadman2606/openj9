@@ -214,8 +214,10 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 			bool isExplicitGC = env->_cycleState->_gcCode.isExplicitGC();
 			if (isExplicitGC || (reclaimableMemory > _extensions->deadClassLoaderCacheSize)) {
 				/* fix the heap */
+				omrtty_printf("SHADMAN mainThreadGarbageCollectFinished do fixHeapForWalk\n");
 				uintptr_t memoryFlags = MEMORY_TYPE_RAM;
 				if (COMPACT_ABORTED_SCAVENGE == compactedThisCycle) {
+					omrtty_printf("SHADMAN mainThreadGarbageCollectFinished include tenure in fixHeapForWalk\n");
 					memoryFlags |= MEMORY_TYPE_OLD;
 				}
 				Trc_MM_DoFixHeapForUnload_Entry(vmThread, memoryFlags);
