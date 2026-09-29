@@ -72,7 +72,8 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 					regionExtension->_continuationObjectLists[i].backoutList();
 				}
 			} else {
-				/* Back out all of regions (includes tenure region, which is backed up during startProcessing). */
+				/* Back out all regions (includes tenure region, which is backed up during startProcessing).
+				 * For the unified STW abort path, all regions also need backing out. */
 				regionExtension->_continuationObjectLists[i].backoutList();
 			}
 		}
@@ -87,8 +88,8 @@ void
 MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *env)
 {
 	bool const compressed = _extensions->compressObjectReferences();
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) || defined(SHAD_UNIFY_SCAVENGE)
+	if (_extensions->isConcurrentScavengerEnabled() || shadUnifyEnabled) {
 		GC_FinalizeListManager * finalizeListManager = _extensions->finalizeListManager;
 		{
 			GC_FinalizableObjectBuffer objectBuffer(_extensions);
@@ -159,7 +160,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			referenceBuffer.flush(env);
 		}
 	} else
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER || SHAD_UNIFY_SCAVENGE */
 	{
 		GC_FinalizeListManager * finalizeListManager = _extensions->finalizeListManager;
 		{
@@ -261,8 +262,8 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 		}
 	}
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) || defined(SHAD_UNIFY_SCAVENGE)
+	if (_extensions->isConcurrentScavengerEnabled() || shadUnifyEnabled) {
 		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
 		while (NULL != (region = regionIterator2.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
@@ -290,7 +291,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 			}
 		}
 	} else
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER || SHAD_UNIFY_SCAVENGE */
 	{
 		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
 		while (NULL != (region = regionIterator2.nextRegion())) {
@@ -334,8 +335,8 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 void
 MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *env)
 {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) || defined(SHAD_UNIFY_SCAVENGE)
+	if (_extensions->isConcurrentScavengerEnabled() || shadUnifyEnabled) {
 		/**
 		 * For ConcurrentScavenge no need to backout stack references,
 		 * since they will be fixed up to point to the new version of the object
@@ -343,7 +344,7 @@ MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *e
 		 */
 		return;
 	} else
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#endif /* OMR_GC_CONCURRENT_SCAVENGER || SHAD_UNIFY_SCAVENGE */
 	{
 		MM_Heap *heap = _extensions->heap;
 		MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();

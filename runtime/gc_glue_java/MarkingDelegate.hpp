@@ -27,6 +27,7 @@
 #include "objectdescription.h"
 
 #include "FlattenedArrayObjectScanner.hpp"
+#include "ForwardedHeader.hpp"
 #include "GCExtensions.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 #include "MarkMap.hpp"
@@ -150,6 +151,29 @@ public:
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
+#if defined(SHAD_UNIFY_SCAVENGE)
+		/* DEV: Under the unified STW abort path, forwarded nursery objects can reach this
+		 * function despite the forward-object guards already present in the public and private
+		 * scanObject paths. The precise entry point varies — a forwarded address can be pushed
+		 * onto the work stack by inlineMarkObject callers that do not call fixupForwardedSlot
+		 * first (e.g. MarkingSchemeRootMarker::doSlot during markAll root scanning).
+		 *
+		 * This is not the most precise fix — ideally every inlineMarkObject call site would
+		 * call fixupForwardedSlot first — but returning NULL here is the safest, simplest
+		 * choke point: NULL is already the defined "no slots to scan" contract for this
+		 * function, and the forwarded object's copy is discovered and marked through its own
+		 * reachability chain (RS scan, other roots). Skipping the original forwarded address
+		 * loses nothing. CS does not need this guard — CS never exposes live forward pointers
+		 * to the global marker. */
+		if (shadUnifyEnabled && !_extensions->isConcurrentScavengerEnabled()
+			&& _extensions->isScavengerBackOutFlagRaised()) {
+			MM_ForwardedHeader forwardHeader(objectPtr, _extensions->compressObjectReferences());
+			if (forwardHeader.isForwardedPointer()) {
+				return NULL;
+			}
+		}
+#endif /* SHAD_UNIFY_SCAVENGE */
+
 		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 		uintptr_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
 
